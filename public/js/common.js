@@ -59,6 +59,25 @@ $('#menu-toggle').addEventListener('click', () => toggleSidebar(!document.body.c
 $('#sidebar-backdrop').addEventListener('click', () => toggleSidebar(false));
 document.addEventListener('keydown', (e) => e.key === 'Escape' && toggleSidebar(false));
 
+// On desktop the sidebar burger collapses it to an icon-only rail to give pages more room.
+const isMobile = () => matchMedia('(max-width: 900px)').matches;
+function setCollapsed(collapsed) {
+  document.body.classList.toggle('sidebar-collapsed', collapsed);
+  const text = collapsed ? 'Expand menu' : 'Collapse menu';
+  $('#sidebar-toggle').setAttribute('aria-label', text);
+  $('#sidebar-toggle').title = text;
+  try { localStorage.setItem('sidebar-collapsed', collapsed ? '1' : '0'); } catch { /* storage blocked */ }
+  // Let Leaflet maps re-measure once the width animation finishes.
+  setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
+}
+$('#sidebar-toggle').addEventListener('click', () => {
+  if (isMobile()) return toggleSidebar(false);
+  setCollapsed(!document.body.classList.contains('sidebar-collapsed'));
+});
+// Hover names for the icon-only rail.
+$$('.sidebar nav button, .sidebar .nav-link').forEach((el) => (el.title = $('.nav-label', el).textContent));
+try { if (localStorage.getItem('sidebar-collapsed') === '1') setCollapsed(true); } catch { /* storage blocked */ }
+
 // Clock and server / SMS status in the sidebar footer.
 function tickClock() {
   $('#topbar-clock').textContent = new Date().toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
