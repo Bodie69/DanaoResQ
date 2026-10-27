@@ -37,16 +37,47 @@ const safe = (fn) => async (...args) => {
   try { return await fn(...args); } catch (err) { toast(err.message, true); }
 };
 
-// ---------- Tabs ----------
+// ---------- Tabs (sidebar navigation) ----------
 let currentTab = 'dashboard';
 function showTab(name) {
   currentTab = name;
   $$('nav button[data-tab]').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
   $$('main > section').forEach((s) => (s.hidden = s.id !== `tab-${name}`));
+  $('#page-title').textContent = $(`nav button[data-tab="${name}"] .nav-label`).textContent;
+  toggleSidebar(false);
+  window.scrollTo(0, 0);
   document.dispatchEvent(new CustomEvent('tab:shown', { detail: name }));
 }
 $$('nav button[data-tab]').forEach((btn) => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
 const onTab = (name, fn) => document.addEventListener('tab:shown', (e) => e.detail === name && fn());
+
+// On small screens the sidebar slides in over the page.
+function toggleSidebar(open) {
+  document.body.classList.toggle('sidebar-open', open);
+}
+$('#menu-toggle').addEventListener('click', () => toggleSidebar(!document.body.classList.contains('sidebar-open')));
+$('#sidebar-backdrop').addEventListener('click', () => toggleSidebar(false));
+document.addEventListener('keydown', (e) => e.key === 'Escape' && toggleSidebar(false));
+
+// Clock and server / SMS status in the sidebar footer.
+function tickClock() {
+  $('#topbar-clock').textContent = new Date().toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+async function checkStatus() {
+  const el = $('.sys-status');
+  try {
+    const { smsProvider } = await api('/health');
+    el.classList.remove('down');
+    $('#sys-status-text').textContent = `Online · SMS: ${smsProvider}`;
+  } catch {
+    el.classList.add('down');
+    $('#sys-status-text').textContent = 'Server unreachable';
+  }
+}
+tickClock();
+checkStatus();
+setInterval(tickClock, 30000);
+setInterval(checkStatus, 60000);
 
 // ---------- Maps (Leaflet + OpenStreetMap) ----------
 const configReady = api('/config').catch(() => ({ mapCenter: null, mapBounds: null }));

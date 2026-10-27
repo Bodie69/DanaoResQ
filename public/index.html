@@ -8,19 +8,45 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>DanaoResQ</h1>
-    <p>Mobile Alert System for Disaster Preparedness &middot; Brgy. Danao</p>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">&#128737;</div>
+      <div>
+        <div class="brand-name">DanaoResQ</div>
+        <div class="brand-sub">Brgy. Danao &middot; Sibuyan</div>
+      </div>
+    </div>
+
     <nav>
-      <button data-tab="dashboard" class="active">Dashboard</button>
-      <button data-tab="sos">SOS <span id="sos-badge" class="nav-badge" hidden></span></button>
-      <button data-tab="alerts">Alerts</button>
-      <button data-tab="shelters">Shelters &amp; Safe Zones</button>
-      <button data-tab="residents">Residents</button>
-      <button data-tab="actions">Emergency Actions</button>
-      <button data-tab="hotlines">Hotlines</button>
-      <a class="nav-link" href="toolkit.html" target="_blank">Safety Toolkit &#8599;</a>
+      <div class="nav-section">Overview</div>
+      <button data-tab="dashboard" class="active"><span class="nav-icon">&#128202;</span><span class="nav-label">Dashboard</span></button>
+      <button data-tab="sos"><span class="nav-icon">&#128680;</span><span class="nav-label">SOS Requests</span><span id="sos-badge" class="nav-badge" hidden></span></button>
+
+      <div class="nav-section">Communication</div>
+      <button data-tab="alerts"><span class="nav-icon">&#128226;</span><span class="nav-label">Alerts</span></button>
+      <button data-tab="residents"><span class="nav-icon">&#128101;</span><span class="nav-label">Residents</span></button>
+
+      <div class="nav-section">Preparedness</div>
+      <button data-tab="shelters"><span class="nav-icon">&#9978;</span><span class="nav-label">Shelters &amp; Safe Zones</span></button>
+      <button data-tab="actions"><span class="nav-icon">&#128203;</span><span class="nav-label">Emergency Actions</span></button>
+      <button data-tab="hotlines"><span class="nav-icon">&#9742;</span><span class="nav-label">Hotlines</span></button>
     </nav>
+
+    <div class="sidebar-footer">
+      <a class="nav-link" href="toolkit.html" target="_blank"><span class="nav-icon">&#128241;</span><span class="nav-label">Safety Toolkit &#8599;</span></a>
+      <div class="sys-status"><span class="dot"></span><span id="sys-status-text">Connecting…</span></div>
+    </div>
+  </aside>
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+  <div class="layout">
+  <header class="topbar">
+    <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Open menu">&#9776;</button>
+    <div>
+      <h1 id="page-title">Dashboard</h1>
+      <p>Mobile Alert System for Disaster Preparedness &middot; Brgy. Danao</p>
+    </div>
+    <div class="topbar-clock" id="topbar-clock"></div>
   </header>
 
   <main>
@@ -297,6 +323,7 @@
       </div>
     </section>
   </main>
+  </div>
 
   <datalist id="purok-list"></datalist>
   <div id="toast" hidden></div>
