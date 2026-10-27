@@ -1,0 +1,13 @@
+{
+  "name": "Danao Safety Toolkit",
+  "short_name": "Danao SOS",
+  "description": "Offline disaster safety toolkit and SOS for Brgy. Danao residents",
+  "start_url": "toolkit.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#c62828",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

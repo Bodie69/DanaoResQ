@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DanaoResQ Admin</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>DanaoResQ</h1>
+    <p>Mobile Alert System for Disaster Preparedness &middot; Brgy. Danao</p>
+    <nav>
+      <button data-tab="dashboard" class="active">Dashboard</button>
+      <button data-tab="sos">SOS <span id="sos-badge" class="nav-badge" hidden></span></button>
+      <button data-tab="alerts">Alerts</button>
+      <button data-tab="shelters">Shelters &amp; Safe Zones</button>
+      <button data-tab="residents">Residents</button>
+      <button data-tab="actions">Emergency Actions</button>
+      <button data-tab="hotlines">Hotlines</button>
+      <a class="nav-link" href="toolkit.html" target="_blank">Safety Toolkit &#8599;</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="tab-dashboard">
+      <div class="stats" id="stat-tiles"></div>
+      <div class="grid-2">
+        <div class="card">
+          <h2><span class="h-icon">&#128506;</span>Situation map <small>red = active SOS, green = open shelter, orange = full</small></h2>
+          <div id="dash-map" class="map"></div>
+        </div>
+        <div class="card">
+          <h2><span class="h-icon">&#128680;</span>Active SOS</h2>
+          <ul id="dash-sos" class="feed"></ul>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h2><span class="h-icon">&#9978;</span>Shelter occupancy</h2>
+          <div id="dash-shelters"></div>
+        </div>
+        <div class="card">
+          <h2><span class="h-icon">&#128226;</span>Recent alerts</h2>
+          <ul id="dash-alerts" class="feed"></ul>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h2><span class="h-icon">&#127960;</span>Residents per purok</h2>
+          <table>
+            <thead><tr><th>Purok</th><th>Households</th><th>People</th></tr></thead>
+            <tbody id="dash-puroks"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h2><span class="h-icon">&#129309;</span>Vulnerable households</h2>
+          <div id="dash-vulnerable" class="stats small"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SOS -->
+    <section id="tab-sos" hidden>
+      <div class="card">
+        <div class="row">
+          <h2><span class="h-icon">&#128680;</span>Distress SOS requests</h2>
+          <select id="sos-filter">
+            <option value="active">Active (pending / acknowledged / responding)</option>
+            <option value="pending">Pending</option>
+            <option value="acknowledged">Acknowledged</option>
+            <option value="responding">Responding</option>
+            <option value="resolved">Resolved</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="">All</option>
+          </select>
+          <label class="inline"><input type="checkbox" id="sos-notify" checked> Text requester on status change</label>
+        </div>
+        <table>
+          <thead><tr><th>Received</th><th>From</th><th>Purok</th><th>People</th><th>Details</th><th>Location</th><th>Status</th><th></th></tr></thead>
+          <tbody id="sos-rows"></tbody>
+        </table>
+      </div>
+
+      <details class="card">
+        <summary><h2><span class="h-icon">&#128222;</span>Log an SOS manually (call or walk-in)</h2></summary>
+        <form id="sos-form">
+          <div class="row">
+            <label>Name <input name="name"></label>
+            <label>Mobile number <input name="mobileNumber" required placeholder="09XXXXXXXXX"></label>
+            <label>Purok <input name="purok" list="purok-list"></label>
+            <label>People <input name="peopleCount" type="number" min="1" value="1"></label>
+          </div>
+          <label>Details <textarea name="message" rows="2" placeholder="Trapped on roof, water chest-deep, 1 senior"></textarea></label>
+          <button type="submit" class="danger">Log SOS</button>
+        </form>
+      </details>
+    </section>
+
+    <!-- ALERTS -->
+    <section id="tab-alerts" hidden>
+      <form id="alert-form" class="card">
+        <h2 class="with-icon" data-icon="&#128226;" id="alert-form-title">New Alert</h2>
+        <input type="hidden" name="id">
+        <label>Title <input name="title" required maxlength="80" placeholder="Typhoon Signal No. 2"></label>
+        <div class="row">
+          <label>Disaster type <select name="disasterType" required></select></label>
+          <label>Severity <select name="severity" required></select></label>
+        </div>
+        <label>Message <small id="char-count">0/459</small>
+          <textarea name="message" required maxlength="459" rows="4"
+            placeholder="Prepare go-bags. Evacuate to Danao Elementary School if water rises."></textarea>
+        </label>
+        <fieldset>
+          <legend>Target puroks <small>(none checked = all puroks)</small></legend>
+          <div id="purok-checkboxes"></div>
+        </fieldset>
+        <div class="actions">
+          <button type="submit">Save draft</button>
+          <button type="button" id="save-send" class="danger">Save &amp; send SMS</button>
+          <button type="button" id="alert-cancel" class="secondary" hidden>Cancel edit</button>
+        </div>
+      </form>
+
+      <div class="card">
+        <h2><span class="h-icon">&#128172;</span>Alerts</h2>
+        <table>
+          <thead><tr><th>Title</th><th>Type</th><th>Severity</th><th>Puroks</th><th>Status</th><th>Delivery</th><th></th></tr></thead>
+          <tbody id="alert-rows"></tbody>
+        </table>
+      </div>
+
+      <div class="card" id="logs-card" hidden>
+        <h2><span class="h-icon">&#128203;</span>SMS logs: <span id="logs-title"></span></h2>
+        <table>
+          <thead><tr><th>Resident</th><th>Number</th><th>Status</th><th>Time</th><th>Error</th></tr></thead>
+          <tbody id="log-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SHELTERS -->
+    <section id="tab-shelters" hidden>
+      <form id="shelter-form" class="card">
+        <h2 class="with-icon" data-icon="&#9978;" id="shelter-form-title">Add Shelter / Safe Zone</h2>
+        <input type="hidden" name="id">
+        <div class="row">
+          <label>Name <input name="name" required placeholder="Danao Elementary School"></label>
+          <label>Type
+            <select name="type">
+              <option value="evacuation_center">Evacuation center</option>
+              <option value="safe_zone">Safe zone (open area / high ground)</option>
+            </select>
+          </label>
+          <label>Status
+            <select name="status"><option>closed</option><option>open</option><option>full</option></select>
+          </label>
+        </div>
+        <div class="row">
+          <label>Purok <input name="purok" list="purok-list"></label>
+          <label>Address <input name="address"></label>
+        </div>
+        <div class="row">
+          <label>Capacity (people) <input name="capacity" type="number" min="0" value="0"></label>
+          <label>Current occupancy <input name="currentOccupancy" type="number" min="0" value="0"></label>
+          <label>Contact person <input name="contactPerson"></label>
+          <label>Contact number <input name="contactNumber"></label>
+        </div>
+        <fieldset>
+          <legend>Facilities</legend>
+          <div id="facility-checkboxes"></div>
+        </fieldset>
+        <label>Notes <input name="notes"></label>
+        <fieldset>
+          <legend>Location <small>(click the map to set)</small></legend>
+          <div class="row">
+            <label>Latitude <input name="lat" type="number" step="any"></label>
+            <label>Longitude <input name="lng" type="number" step="any"></label>
+          </div>
+          <div id="shelter-map" class="map small"></div>
+        </fieldset>
+        <div class="actions">
+          <button type="submit">Save</button>
+          <button type="button" id="shelter-cancel" class="secondary" hidden>Cancel edit</button>
+        </div>
+      </form>
+
+      <div class="card">
+        <h2><span class="h-icon">&#127969;</span>Shelters &amp; Safe Zones</h2>
+        <table>
+          <thead><tr><th>Name</th><th>Type</th><th>Purok</th><th>Status</th><th>Occupancy</th><th>Facilities</th><th>Contact</th><th></th></tr></thead>
+          <tbody id="shelter-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- RESIDENTS -->
+    <section id="tab-residents" hidden>
+      <form id="resident-form" class="card">
+        <h2 class="with-icon" data-icon="&#128221;" id="resident-form-title">Register Resident</h2>
+        <input type="hidden" name="id">
+        <div class="row">
+          <label>First name <input name="firstName" required></label>
+          <label>Last name <input name="lastName" required></label>
+        </div>
+        <div class="row">
+          <label>Mobile number <input name="mobileNumber" required placeholder="09XXXXXXXXX"></label>
+          <label>Purok <input name="purok" required list="purok-list" placeholder="Purok 1"></label>
+          <label>Household size <input name="householdSize" type="number" min="1" value="1"></label>
+        </div>
+        <label>Address <input name="address"></label>
+        <fieldset>
+          <legend>Vulnerable members in household</legend>
+          <label class="inline"><input type="checkbox" name="senior"> Senior</label>
+          <label class="inline"><input type="checkbox" name="pwd"> PWD</label>
+          <label class="inline"><input type="checkbox" name="pregnant"> Pregnant</label>
+          <label class="inline"><input type="checkbox" name="child"> Child</label>
+        </fieldset>
+        <label class="inline"><input type="checkbox" name="isSubscribed" checked> Receives SMS alerts</label>
+        <div class="actions">
+          <button type="submit">Save</button>
+          <button type="button" id="resident-cancel" class="secondary" hidden>Cancel edit</button>
+        </div>
+      </form>
+
+      <div class="card">
+        <div class="row">
+          <h2><span class="h-icon">&#128101;</span>Residents <small id="resident-count"></small></h2>
+          <input id="resident-search" type="search" placeholder="Search name or number">
+          <select id="resident-purok-filter"><option value="">All puroks</option></select>
+        </div>
+        <table>
+          <thead><tr><th>Name</th><th>Mobile</th><th>Purok</th><th>Household</th><th>Vulnerable</th><th>SMS</th><th></th></tr></thead>
+          <tbody id="resident-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- EMERGENCY ACTIONS -->
+    <section id="tab-actions" hidden>
+      <form id="action-form" class="card">
+        <h2 class="with-icon" data-icon="&#128221;" id="action-form-title">Add Emergency Action Guide</h2>
+        <input type="hidden" name="id">
+        <div class="row">
+          <label>Disaster type <select name="disasterType" required></select></label>
+          <label>Phase
+            <select name="phase"><option value="before">Before</option><option value="during">During</option><option value="after">After</option></select>
+          </label>
+          <label>Order <input name="order" type="number" value="0"></label>
+        </div>
+        <label>Title <input name="title" required placeholder="During a Flood"></label>
+        <label>Steps <small>(one per line)</small> <textarea name="steps" rows="5" required></textarea></label>
+        <div class="actions">
+          <button type="submit">Save</button>
+          <button type="button" id="action-cancel" class="secondary" hidden>Cancel edit</button>
+        </div>
+      </form>
+
+      <div class="card">
+        <div class="row">
+          <h2><span class="h-icon">&#128203;</span>Emergency Action Guides <small>shown in the offline toolkit</small></h2>
+          <select id="action-filter"><option value="">All disaster types</option></select>
+        </div>
+        <div id="action-list" class="action-grid"></div>
+      </div>
+    </section>
+
+    <!-- HOTLINES -->
+    <section id="tab-hotlines" hidden>
+      <form id="hotline-form" class="card">
+        <h2 class="with-icon" data-icon="&#128222;" id="hotline-form-title">Add Hotline</h2>
+        <input type="hidden" name="id">
+        <div class="row">
+          <label>Name <input name="name" required placeholder="Brgy. Danao Hall"></label>
+          <label>Number <input name="number" required placeholder="0917XXXXXXX"></label>
+          <label>Category
+            <select name="category">
+              <option>barangay</option><option>rescue</option><option>police</option><option>fire</option>
+              <option>medical</option><option>utility</option><option>other</option>
+            </select>
+          </label>
+          <label>Order <input name="order" type="number" value="0"></label>
+        </div>
+        <div class="actions">
+          <button type="submit">Save</button>
+          <button type="button" id="hotline-cancel" class="secondary" hidden>Cancel edit</button>
+        </div>
+      </form>
+      <div class="card">
+        <h2><span class="h-icon">&#9742;</span>Emergency Hotlines <small>shown in the offline toolkit</small></h2>
+        <table>
+          <thead><tr><th>Name</th><th>Number</th><th>Category</th><th>Order</th><th></th></tr></thead>
+          <tbody id="hotline-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <datalist id="purok-list"></datalist>
+  <div id="toast" hidden></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/common.js"></script>
+  <script src="app.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/sos.js"></script>
+  <script src="js/shelters.js"></script>
+  <script src="js/actions.js"></script>
+  <script src="js/hotlines.js"></script>
+</body>
+</html>

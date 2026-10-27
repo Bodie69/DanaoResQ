@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#c62828">
+  <title>Danao Safety Toolkit</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="toolkit.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Danao Safety Toolkit</h1>
+      <small id="sync-info">Loading…</small>
+    </div>
+    <span id="net-status" class="pill">…</span>
+  </header>
+
+  <main>
+    <!-- SOS -->
+    <section id="sec-sos" class="panel">
+      <button id="sos-big" class="sos-button" type="button">SOS<small>Ask the barangay for help</small></button>
+
+      <form id="sos-form" hidden>
+        <h2>Emergency Distress SOS</h2>
+        <label>Your name <input name="name" autocomplete="name"></label>
+        <label>Mobile number <input name="mobileNumber" required inputmode="tel" placeholder="09XXXXXXXXX" autocomplete="tel"></label>
+        <div class="row">
+          <label>Purok <input name="purok"></label>
+          <label>No. of people <input name="peopleCount" type="number" min="1" value="1"></label>
+        </div>
+        <label>What is happening? <textarea name="message" rows="3" placeholder="e.g. Trapped on roof, water rising, 1 senior with us"></textarea></label>
+        <p id="loc-info" class="muted">Getting your location…</p>
+        <button type="submit" class="danger big">Send SOS</button>
+        <button type="button" id="sos-close" class="ghost">Cancel</button>
+      </form>
+
+      <div id="sos-fallback" class="notice" hidden>
+        <strong>No internet. Send your SOS by text or call instead:</strong>
+        <a id="sos-sms" class="btn danger big" href="#">Send SOS by text</a>
+        <a class="btn big" href="tel:911">Call 911</a>
+      </div>
+
+      <div id="sos-status" class="notice ok" hidden></div>
+    </section>
+
+    <nav class="tabs">
+      <button data-sec="hotlines" class="active">Hotlines</button>
+      <button data-sec="guides">What to do</button>
+      <button data-sec="shelters">Shelters</button>
+      <button data-sec="gobag">Go-bag</button>
+      <button data-sec="tools">Tools</button>
+    </nav>
+
+    <section id="sec-hotlines" class="panel">
+      <ul id="hotline-list" class="list"></ul>
+    </section>
+
+    <section id="sec-guides" class="panel" hidden>
+      <select id="guide-type"></select>
+      <div id="guide-content"></div>
+    </section>
+
+    <section id="sec-shelters" class="panel" hidden>
+      <p class="muted" id="shelter-note"></p>
+      <ul id="shelter-list" class="list"></ul>
+    </section>
+
+    <section id="sec-gobag" class="panel" hidden>
+      <p class="muted">Prepare a go-bag for each family member, good for at least 3 days. Your checks are saved on this phone.</p>
+      <div id="gobag-progress" class="progress"><div></div></div>
+      <ul id="gobag-list" class="checklist"></ul>
+      <button id="gobag-reset" class="ghost" type="button">Clear all checks</button>
+    </section>
+
+    <section id="sec-tools" class="panel" hidden>
+      <div class="tool-grid">
+        <button id="tool-siren" type="button" class="tool">&#128227;<span>Siren / whistle</span></button>
+        <button id="tool-light" type="button" class="tool">&#128294;<span>Screen light</span></button>
+        <a id="tool-safe" class="tool" href="#">&#9989;<span>Text family "I'm safe"</span></a>
+        <button id="tool-share-loc" type="button" class="tool">&#128205;<span>Show my coordinates</span></button>
+      </div>
+      <p id="coords" class="notice" hidden></p>
+      <h3>Saved profile</h3>
+      <p class="muted">Your name, number and purok are saved on this phone to fill the SOS form faster.</p>
+      <button id="profile-clear" class="ghost" type="button">Forget my details</button>
+    </section>
+  </main>
+
+  <div id="light-overlay" hidden>Tap anywhere to turn off</div>
+  <script src="toolkit.js"></script>
+</body>
+</html>
